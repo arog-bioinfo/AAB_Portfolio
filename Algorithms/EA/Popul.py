@@ -108,10 +108,11 @@ class PopulReal(Popul):
     def __init__(self, popsize, indsize, lb, ub, indivs=[]):
         self.ub = ub
         self.lb = lb
-        super().__init__(self, popsize, indsize, indivs)
+        super().__init__(popsize, indsize, indivs)
 
     def initRandomPop(self):
         self.indivs = []
         for _ in range(self.popsize):
             indiv_i = IndivReal(self.indsize, [], self.lb, self.ub)
             self.indivs.append(indiv_i)
+

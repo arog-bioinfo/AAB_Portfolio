@@ -28,6 +28,7 @@ class MyMotifs:
             self.pwm = pwm
             self.size = len(pwm[0])
             self.alphabet = alphabet
+            self.counts = self.generateCountsFromPWM()
 
     def __len__(self):
         return self.size
@@ -40,12 +41,35 @@ class MyMotifs:
                 self.counts[lin][i] += 1
 
     def createPWM(self):
-        if self.counts == None:
-            self.doCounts()
+        # if self.counts == None:
+        #     self.doCounts()
+        # self.pwm = createMatZeros(len(self.alphabet), self.size)
+        # for i in range(len(self.alphabet)):
+        #     for j in range(self.size):
+        #         self.pwm[i][j] = float(self.counts[i][j]) / len(self.seqs)
+
+        """Alterações para fazer o EAMotifsReal"""
+        
+        if not hasattr(self, "counts") or self.counts is None:
+            self.counts = self.generateCountsFromPWM()
+
         self.pwm = createMatZeros(len(self.alphabet), self.size)
+
         for i in range(len(self.alphabet)):
             for j in range(self.size):
-                self.pwm[i][j] = float(self.counts[i][j]) / len(self.seqs)
+                total_counts = sum(self.counts[x][j] for x in range(len(self.alphabet)))
+                if total_counts > 0:
+                    self.pwm[i][j] = float(self.counts[i][j]) / total_counts
+                else:
+                    self.pwm[i][j] = 0.25  # Assign uniform probability if no counts
+
+    def generateCountsFromPWM(self):
+
+        counts = createMatZeros(len(self.alphabet), self.size)
+        for i in range(len(self.alphabet)):
+            for j in range(self.size):
+                counts[i][j] = self.pwm[i][j] * 100  # Approximate scaling
+        return counts
 
     def consensus(self):
         res = ""

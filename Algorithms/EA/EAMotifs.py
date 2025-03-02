@@ -54,20 +54,51 @@ class EAMotifsReal (EvolAlgorithm):
         self.popul = PopulReal(self.popsize, indsize, lb=0.0, ub=1.0)
 
     def evaluate(self, indivs):
-        pass
+        """Evaluates each individual by constructing a PWM, finding best motif positions, and computing fitness."""
+        for ind in indivs:
+            pwm = self.reshape_to_pwm(ind.getGenes(), 4, self.motifs.motifSize)
+            pwm = self.normalizePWM(pwm)
+
+            # Use MyMotifs to extract motif from best positions
+            motif_positions = self.findBestMotifPositions(pwm)
+            motif = self.motifs.createMotifFromIndexes(motif_positions)
+            motif.createPWM()  
+
+            # Compute fitness score using MotifFinding's scoring function
+            fit = self.motifs.score(motif_positions)
+            ind.setFitness(fit)
+
+    def reshape_to_pwm(self, genes, rows, cols):
+        """Reshapes a flat list into a PWM matrix of dimensions rows × cols."""
+        return [genes[i * cols:(i + 1) * cols] for i in range(rows)]
+
+    def normalizePWM(self, pwm):
+        """Uses MyMotifs to normalize the PWM."""
+        motif = MyMotifs(pwm=pwm, alphabet="ACGT")  
+        motif.createPWM()  
+        return motif.pwm  
+
+    def findBestMotifPositions(self, pwm):
+        """Finds the most probable motif positions in each sequence using the PWM."""
+        return [self.mostProbableMotif(seq, pwm) for seq in self.motifs.seqs]
+
+    def mostProbableMotif(self, seq, pwm):
+        """Uses MyMotifs to find the best start position for the motif."""
+        motif = MyMotifs(pwm=pwm, alphabet="ACGT")
+        return motif.mostProbableSeq(seq)
 
 
 def test1():
-    ea = EAMotifsInt(100, 1000, 50, "exemploMotifs.txt")
+    ea = EAMotifsInt(100, 500, 50, "exemploMotifs.txt")
     ea.run()
     ea.printBestSolution()
 
 
 def test2():
-    ea = EAMotifsReal(100, 2000, 50, "exemploMotifs.txt", 2)
+    ea = EAMotifsReal(100, 500, 50, "exemploMotifs.txt")
     ea.run()
     ea.printBestSolution()
 
 
-test1()
-# test2()
+# test1()
+test2()
