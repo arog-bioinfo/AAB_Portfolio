@@ -1,5 +1,22 @@
 #UNITEST
+import random
 
+def gerar_seq(n_seqs, tam):
+    nucleotidos = "ACTG"
+    seqs = [''.join(random.choices(nucleotidos, k=tam)) for _ in range(n_seqs)]
+    return seqs
+
+def inserir_motif(seqs, motif):
+    tam_motif = len(motif)
+    posicoes = []
+
+    for i in range(len(seqs)):
+        tam_seq = len(seqs[i])
+        pos = random.randint(0, tam_seq - tam_motif)  # Escolhe uma posição aleatória válida
+        seqs[i] = seqs[i][:pos] + motif + seqs[i][pos + tam_motif:]  # Substitui parte da sequência pelo motif
+        posicoes.append(pos)
+
+    return seqs, posicoes
 #BB 
 import unittest
 
