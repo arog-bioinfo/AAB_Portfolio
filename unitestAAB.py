@@ -1,6 +1,8 @@
 # UNITEST
 import random
 import unittest
+from Algorithms.BB import *
+from Algorithms.exaustivo import *
 
 def gerar_seq(n_seqs, tam):
     nucleotidos = "ACTG"
