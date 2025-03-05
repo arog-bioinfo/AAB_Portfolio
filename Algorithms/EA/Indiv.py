@@ -120,7 +120,7 @@ class IndivReal(Indiv):
     def initRandom(self, size):
         self.genes = []
         for _ in range(size):
-            self.genes.append(uniform(self.lb, self.ub))
+            self.genes.append(uniform(self.lb, self.ub)) #experimentar uma gaussiana 
 
     def mutation(self):
         s = len(self.genes)
