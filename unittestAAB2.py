@@ -21,6 +21,12 @@ def inserir_motif(seqs, motif):
 
     return seqs, posicoes
 
+class counter():
+    def __init__(self):
+        self.count = 0
+        
+        pass
+    pass
 class TestExhaustiveSearch(unittest.TestCase):
     def test_exaustiive_search(self):
         seqs = gerar_seq(3, 10)  
