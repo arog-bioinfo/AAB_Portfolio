@@ -52,5 +52,7 @@ def bwt_reverse(bwt: str, original_index: int) -> str:
 if __name__ == "__main__":
     resultado = bwt_transform("banana")
     print(resultado)
+    original_recuperado = bwt_reverse(resultado[1], resultado[2])
+    print("Sequência recuperada:", original_recuperado)
 
 
