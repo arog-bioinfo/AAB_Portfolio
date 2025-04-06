@@ -13,19 +13,18 @@ def bwt_transform(seq: str) -> List[Union[str, int]]:
             - a sequência transformada BWT;
             - o índice da sequência original na lista de rotações ordenadas.
     """
-    original = seq 
+    original = seq  # Guarda a original
     if '$' not in seq:
         seq += '$'
 
     rotacoes = [seq[i:] + seq[:i] for i in range(len(seq))]
     rotacoes.sort()
     bwt = ''.join(rot[-1] for rot in rotacoes)
-    pos_original = rotacoes.index(seq)
 
-    return [original, bwt, pos_original] 
+    return [original, bwt] 
 
 
-def bwt_reverse(bwt: str, original_index: int) -> str:
+def bwt_reverse(bwt: str) -> str:
     """
     Reverte a transformação BWT e recupera a sequência original.
 
@@ -38,13 +37,14 @@ def bwt_reverse(bwt: str, original_index: int) -> str:
     """
     n = len(bwt)
     table = [''] * n
+    start_index = bwt.index("$")
 
     for _ in range(n):
         # Adiciona bwt como prefixo a cada linha da tabela
         table = sorted([bwt[i] + table[i] for i in range(n)])
 
     # A linha original é aquela no índice original_index
-    original = table[original_index]
+    original = table[start_index]
 
     # Remover o símbolo de fim '$' antes de devolver
     return original.rstrip('$')
@@ -52,7 +52,7 @@ def bwt_reverse(bwt: str, original_index: int) -> str:
 if __name__ == "__main__":
     resultado = bwt_transform("banana")
     print(resultado)
-    original_recuperado = bwt_reverse(resultado[1], resultado[2])
+    original_recuperado = bwt_reverse(resultado[1])
     print("Sequência recuperada:", original_recuperado)
 
 
