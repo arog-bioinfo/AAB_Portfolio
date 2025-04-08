@@ -3,7 +3,7 @@ import unittest
 from Algorithms.BB import *
 from Algorithms.exaustivo import *
 from Algorithms.gibbs import *
-from Algorithms.bwt_2 import *
+from Algorithms.BWT import *
 from Algorithms.auto_finito import *
 from Algorithms.tries import *
 
@@ -164,21 +164,27 @@ class TestTrees(unittest.TestCase):
 
         st = SuffixTree()
         st.build(*seq)
-        st.print_tree()
         self.assertEqual(st.find_pattern(*pattern), [*p,int(*p)+3])
-
-    def test_suffixcom_trie(self):
-        pass
 
 class TestBwt(unittest.TestCase):
 
     def test_BWT_backtracking(self):
-        pass
-        seq = str(gerar_seq(1,10))
-        resultado = BWT(seq)
-        recuperado = bwt_reverse(resultado[1])
+        seq = str(*gerar_seq(1,10))
+        bwt_instance = BWT(seq)
+        resultado = bwt_instance.bwt
+        recuperado = bwt_reverse(resultado)
         
         self.assertEqual(recuperado, seq)
+
+    def test_BWT_subwords(self):
+        seq = gerar_seq(1, 10)
+        pattern = gerar_seq(1,2, alphabet="XYZW")
+        m = str(*pattern) + "A" + str(*pattern)
+        seq, p = inserir_motif(seq, m)
+
+        bwt_instance = BWT(*seq, buildsufarray=True)
+
+        self.assertEqual(bwt_instance.bw_matching_pos(*pattern), [*p, int(*p)+3])
 
 if __name__ == "__main__":
     unittest.main()
