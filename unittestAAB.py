@@ -98,7 +98,6 @@ class TestGibbs(unittest.TestCase):
 #Checkpoint 2
 
 class TestAutomata(unittest.TestCase):
-    pass
 
     def test_no_ocurrence(self):
         seq = str(*gerar_seq(1,20))
@@ -174,7 +173,7 @@ class TestTrees(unittest.TestCase):
 class TestBwt(unittest.TestCase):
 
     def test_BWT_backtracking(self):
-
+        pass
         seq = str(gerar_seq(1,10))
         resultado = BWT(seq)
         recuperado = bwt_reverse(resultado[1])
