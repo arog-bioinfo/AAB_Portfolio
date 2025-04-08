@@ -3,7 +3,7 @@ import unittest
 from Algorithms.BB import *
 from Algorithms.exaustivo import *
 from Algorithms.gibbs import *
-from Algorithms.BWT import *
+from Algorithms.bwt_2 import *
 from Algorithms.auto_finito import *
 # from Algorithms.tsTrees import *
 
@@ -139,7 +139,7 @@ class TestBwt(unittest.TestCase):
     def test_BWT_backtracking(self):
 
         seq = str(gerar_seq(1,10))
-        resultado = bwt_transform(seq)
+        resultado = BWT(seq)
         recuperado = bwt_reverse(resultado[1])
         
         self.assertEqual(recuperado, seq)
