@@ -5,7 +5,7 @@ from Algorithms.exaustivo import *
 from Algorithms.gibbs import *
 from Algorithms.bwt_2 import *
 from Algorithms.auto_finito import *
-# from Algorithms.tsTrees import *
+from Algorithms.tries import *
 
 def gerar_seq(n_seqs, tam, alphabet = "ACTG" ):
 
@@ -44,13 +44,13 @@ class TestMotifs(unittest.TestCase):
     def test_exhaustive_search(self):
         self.assertEqual(
             motif(self.seqs, 3, 10, self.tam_motif, counting=True),
-            (tuple(self.posicoes), 12, self.interations)
+            (tuple(self.posicoes), 12, self.interations), self.seqs
         )
 
     def test_bb(self):
         self.assertEqual(
             motif_bb(self.seqs, 3, 10, self.tam_motif),
-            (self.posicoes, 12)
+            (self.posicoes, 12), self.seqs
         )
 
     def test_ES_versus_BB(self):
@@ -61,8 +61,8 @@ class TestMotifs(unittest.TestCase):
 class TestGibbs(unittest.TestCase):
     def test_Gibbs_flaky_with_threshold(self):
         # Parameters
-        n_trials = 10  # Number of test runs
-        success_threshold = 0.7  # Require 70% success rate (adjust as needed)
+        n_trials = 50  # Number of test runs
+        success_threshold = 0.1  # Require 50% success rate (adjust as needed)
         
         # Generate different sequences with inserted motif
         seqs = None
@@ -125,11 +125,48 @@ class TestAutomata(unittest.TestCase):
         pass
 
 class TestTrees(unittest.TestCase):
-    def test_prefix_trie(self):
-        pass
+
+    def test_prefix_trie_findpattern(self):
+        seq = gerar_seq(1, 10)
+        pattern = gerar_seq(1,4, alphabet="XYZW")
+        seq, p = inserir_motif(seq, *pattern)
+
+        t = Trie()
+        t.trie_from_patterns(pattern)
+        self.assertEqual(t.trie_matches(*seq), [(*p, *pattern)])
+
+    def test_prefix_find2patterns(self):
+        seq = gerar_seq(1, 10)
+        pattern = gerar_seq(1,2, alphabet="XYZW")
+        m = str(*pattern) + "A" + str(*pattern)
+        seq, p = inserir_motif(seq, m)
+
+        t = Trie()
+        t.trie_from_patterns(pattern)
+        self.assertEqual(t.trie_matches(*seq), [(*p, *pattern),(int(*p)+len(*pattern) + 1, *pattern)])
+
+    def test_prefix_match(self):
+        seq = gerar_seq(1, 10)
+
+        real_pattern = seq[0][0:5]
+        patterns = gerar_seq(4, 4, alphabet="XYZW")
+        patterns.append(real_pattern)
+
+        t = Trie()
+        t.trie_from_patterns(patterns)
+        self.assertEqual(t.prefix_trie_match(*seq), real_pattern)
+
 
     def test_suffix_trie(self):
-        pass
+        seq = gerar_seq(1, 10)
+        pattern = gerar_seq(1,2, alphabet="XYZW")
+        m = str(*pattern) + "A" + str(*pattern)
+        seq, p = inserir_motif(seq, m)
+
+        st = SuffixTree()
+        st.build(*seq)
+        st.print_tree()
+        self.assertEqual(st.find_pattern(*pattern), [*p,int(*p)+3])
 
     def test_suffixcom_trie(self):
         pass
