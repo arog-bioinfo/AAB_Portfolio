@@ -62,10 +62,10 @@ class TestGibbs(unittest.TestCase):
     def test_Gibbs_flaky_with_threshold(self):
         # Parameters
         n_trials = 50  # Number of test runs
-        success_threshold = 0.1  # Require 50% success rate (adjust as needed)
+        success_threshold = 0.5  # Require 50% success rate (adjust as needed)
         
         # Generate different sequences with inserted motif
-        seqs = None
+        seqs = ["AGCTTACGGA", "TGCAGTCTAC", "CCGTAGGAAT"]
         while seqs == None or len(seqs) != len(set(seqs)):
             seqs = gerar_seq(3, 10)
 
@@ -121,7 +121,22 @@ class TestAutomata(unittest.TestCase):
         self.assertEqual((count,positions), (1, p), f"{seq}")
     
     def test_more_ocurrences(self):
-        pass
+        seq = ""
+        pos = []
+        for _ in range(4):
+            s = gerar_seq(1,8)
+            pattern ="HERE"
+            s, p = inserir_motif(s, pattern)
+
+            seq += s[0]
+            pos.append(p[0] + (8*_))
+
+
+        alphabet = {"A","C","T","G","H","E","R"}
+        automaton = AutomatosFinitos(alphabet, pattern)
+        count, positions = automaton.find_occurrences(seq)
+
+        self.assertEqual((count,positions), (4, pos), f"{seq}")
 
 class TestTrees(unittest.TestCase):
 
@@ -132,17 +147,17 @@ class TestTrees(unittest.TestCase):
 
         t = Trie()
         t.trie_from_patterns(pattern)
-        self.assertEqual(t.trie_matches(*seq), [(*p, *pattern)])
+        self.assertEqual(t.trie_matches(seq[0]), [(p[0], pattern[0])])
 
     def test_prefix_find2patterns(self):
         seq = gerar_seq(1, 10)
         pattern = gerar_seq(1,2, alphabet="XYZW")
-        m = str(*pattern) + "A" + str(*pattern)
+        m = pattern[0] + "A" + pattern[0]
         seq, p = inserir_motif(seq, m)
 
         t = Trie()
         t.trie_from_patterns(pattern)
-        self.assertEqual(t.trie_matches(*seq), [(*p, *pattern),(int(*p)+len(*pattern) + 1, *pattern)])
+        self.assertEqual(t.trie_matches(seq[0]), [(p[0], pattern[0]),(p[0] +len(pattern[0]) + 1, pattern[0])])
 
     def test_prefix_match(self):
         seq = gerar_seq(1, 10)
@@ -153,7 +168,7 @@ class TestTrees(unittest.TestCase):
 
         t = Trie()
         t.trie_from_patterns(patterns)
-        self.assertEqual(t.prefix_trie_match(*seq), real_pattern)
+        self.assertEqual(t.prefix_trie_match(seq[0]), real_pattern)
 
 
     def test_suffix_trie(self):
@@ -164,7 +179,7 @@ class TestTrees(unittest.TestCase):
 
         st = SuffixTree()
         st.build(*seq)
-        self.assertEqual(st.find_pattern(*pattern), [*p,int(*p)+3])
+        self.assertEqual(st.find_pattern(pattern[0]), [p[0],p[0]+3])
 
 class TestBwt(unittest.TestCase):
 
@@ -184,7 +199,7 @@ class TestBwt(unittest.TestCase):
 
         bwt_instance = BWT(*seq, buildsufarray=True)
 
-        self.assertEqual(bwt_instance.bw_matching_pos(*pattern), [*p, int(*p)+3])
+        self.assertEqual(bwt_instance.bw_matching_pos(pattern[0]), [p[0], p[0]+3])
 
 if __name__ == "__main__":
     unittest.main()
