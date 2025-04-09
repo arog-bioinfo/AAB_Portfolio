@@ -62,7 +62,7 @@ class TestGibbs(unittest.TestCase):
     def test_Gibbs_flaky_with_threshold(self):
         # Parameters
         n_trials = 50  # Number of test runs
-        success_threshold = 0.5  # Require 50% success rate (adjust as needed)
+        success_threshold = 0.5  # Require 50% success rate 
         
         # Generate different sequences with inserted motif
         seqs = ["AGCTTACGGA", "TGCAGTCTAC", "CCGTAGGAAT"]
