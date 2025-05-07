@@ -201,5 +201,16 @@ class TestBwt(unittest.TestCase):
 
         self.assertEqual(bwt_instance.bw_matching_pos(pattern[0]), [p[0], p[0]+3])
 
+#Checkpoint 3
+
+class TestGraph(unittest.TestCase):
+    pass
+
+class TestBiologicalNetwork(unittest.TestCase):
+    pass
+
+class TestAssembly(unittest.TestCase):
+    pass
+
 if __name__ == "__main__":
     unittest.main()
