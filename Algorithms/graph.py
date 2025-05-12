@@ -58,7 +58,7 @@ class Graph:
         return len(self.get_successors(v))
 
     def degree(self, v):
-        return len(self.get_adjacents(v))
+        return self.in_degree(v) + self.out_degree(v)
 
     def reachable_bfs(self, v):
         queue = [v]

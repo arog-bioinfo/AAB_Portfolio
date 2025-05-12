@@ -1,4 +1,4 @@
-from graph import Graph
+from Algorithms.graph import Graph
 
 #=================================================================
 #-----------------------Assembly Algorythm------------------------

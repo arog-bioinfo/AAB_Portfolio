@@ -1,5 +1,5 @@
 from collections import deque
-from graph import Graph
+from Algorithms.graph import Graph
 import regex as re
 import heapq
 
@@ -14,6 +14,40 @@ def is_in_tuple_list(tl, val):
     return False
 
 class MN_Graph(Graph):
+
+    def all_degrees(self, deg_type="inout"):
+        degs = {}
+        for v in self.graph:
+            if deg_type == "out" or deg_type == "inout":
+                degs[v] = len(self.graph[v])
+            else:
+                degs[v] = 0
+        if deg_type == "in" or deg_type == "inout":
+            for v in self.graph:
+                for d in self.graph[v]:
+                    if deg_type == "in" or v not in self.graph[d]:
+                        degs[d] = degs.get(d, 0) + 1
+        return degs
+    
+    def highest_degrees(self, all_deg=None, deg_type="inout", top=10):
+        if all_deg is None:
+            all_deg = self.all_degrees(deg_type)
+        ord_deg = sorted(all_deg.items(), key=lambda x: x[1], reverse=True)
+        return [x[0] for x in ord_deg[:top]]
+
+    def mean_degree(self, deg_type="inout"):
+        degs = self.all_degrees(deg_type)
+        return sum(degs.values()) / float(len(degs))
+
+    def prob_degree(self, deg_type="inout"):
+        degs = self.all_degrees(deg_type)
+        res = {}
+        for k in degs:
+            res[degs[k]] = res.get(degs[k], 0) + 1
+        for k in res:
+            res[k] /= float(len(degs))
+        return res
+    
     def reachable_with_dist(self, s):
         res = []
         l = [(s, 0)]
