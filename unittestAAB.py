@@ -209,6 +209,10 @@ class TestBwt(unittest.TestCase):
 
 #Checkpoint 3
 
+#=================================================================
+#---------------Oriented Graph and Weightned Graph----------------
+#=================================================================
+
 class TestGraph(unittest.TestCase):
 
     def setUp(self):
@@ -333,6 +337,10 @@ class TestWeightnedGraph(unittest.TestCase):
         self.assertEqual(distances['B'], 2)
         self.assertEqual(distances['C'], float('inf'))
 
+#=================================================================
+#-----------------------Metabolic Network-------------------------
+#=================================================================
+
 class TestBiologicalNetwork(unittest.TestCase):
     def setUp(self):
         self.graph = MN_Graph({
@@ -426,6 +434,10 @@ class TestCentralityAnalyzer(unittest.TestCase):
         top = self.analyzer.top_nodes(bc, top_n=2)
         self.assertEqual(len(top), 2)
         self.assertTrue(all(n in self.graph.get_nodes() for n, _ in top))
+
+#=================================================================
+#-----------------------Assembly Algorythm------------------------
+#=================================================================
 
 class TestAssembly(unittest.TestCase):
     def test_composition(self):
