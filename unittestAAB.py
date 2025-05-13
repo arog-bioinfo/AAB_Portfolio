@@ -253,6 +253,20 @@ class TestGraph(unittest.TestCase):
         self.assertEqual(g.distance("A", "C"), 2)
         self.assertEqual(g.shortest_path("A", "C"), ["A", "B", "C"])
         self.assertIsNone(g.distance("C", "A"))
+    
+    def test_reachable_with_dist(self):
+        g = self.Graph({
+            "A": ["B", "C"],
+            "B": ["C"],
+            "C": ["D"],
+            "D": [],
+            "E": []  # unreachable node
+        })
+        reachable = g.reachable_with_dist("A")
+        self.assertIn(('B', 1), reachable)
+        self.assertIn(('C', 1), reachable)
+        self.assertIn(('D', 2), reachable)
+        self.assertNotIn(('E', 3), reachable)
 
     def test_cycle_detection(self):
         g1 = self.Graph({"A": ["B"], "B": ["C"], "C": ["A"]})  # cycle
@@ -329,13 +343,6 @@ class TestBiologicalNetwork(unittest.TestCase):
             'E': []
         })
 
-    def test_reachable_with_dist(self):
-        reachable = self.graph.reachable_with_dist('A')
-        self.assertIn(('B', 1), reachable)
-        self.assertIn(('C', 1), reachable)
-        self.assertIn(('D', 2), reachable)
-        self.assertIn(('E', 3), reachable)
-
     def test_mean_distances(self):
         mean_dist, density = self.graph.mean_distances()
         self.assertGreater(mean_dist, 0)
@@ -373,8 +380,102 @@ class TestBiologicalNetwork(unittest.TestCase):
             self.assertGreaterEqual(v, 0)
             self.assertLessEqual(v, 1)
 
+class TestCentralityAnalyzer(unittest.TestCase):
+    def setUp(self):
+        self.graph = MN_Graph({
+            'A': ['B', 'C'],
+            'B': ['C', 'D'],
+            'C': ['D'],
+            'D': ['E'],
+            'E': []
+        })
+        self.analyzer = CentralityAnalyzer(self.graph)
+
+    def test_degree_centrality(self):
+        degree_c = self.analyzer.degree_centrality()
+        expected = {
+            'A': 2,
+            'B': 2,
+            'C': 1,
+            'D': 1,
+            'E': 0
+        }
+        self.assertEqual(degree_c, expected)
+
+    def test_closeness_centrality_values(self):
+        closeness = self.analyzer.closeness_centrality()
+        for val in closeness.values():
+            self.assertGreaterEqual(val, 0.0)
+            self.assertLessEqual(val, 1.0)
+
+    def test_betweenness_centrality_values(self):
+        betweenness = self.analyzer.betweenness_centrality()
+        for val in betweenness.values():
+            self.assertGreaterEqual(val, 0.0)
+
+    def test_top_nodes_degree(self):
+        degree = self.analyzer.degree_centrality()
+        top = self.analyzer.top_nodes(degree, top_n=2)
+        self.assertEqual(len(top), 2)
+        # Should contain nodes with out-degree 2: A and B
+        self.assertIn('A', [n for n, _ in top])
+        self.assertIn('B', [n for n, _ in top])
+
+    def test_top_nodes_betweenness(self):
+        bc = self.analyzer.betweenness_centrality()
+        top = self.analyzer.top_nodes(bc, top_n=2)
+        self.assertEqual(len(top), 2)
+        self.assertTrue(all(n in self.graph.get_nodes() for n, _ in top))
+
 class TestAssembly(unittest.TestCase):
-    pass
+    def test_composition(self):
+        self.assertEqual(
+            composition(3, "ATGCG"),
+            ["ATG", "GCG", "TGC"]
+        )
+
+    def test_debruijn_graph_construction(self):
+        kmers = ["ATG", "TGC", "GCG"]
+        dbg = DeBruijnGraph(kmers)
+        self.assertIn("AT", dbg.graph)
+        self.assertIn("TG", dbg.graph)
+        self.assertIn("GC", dbg.graph)
+        self.assertIn("TG", dbg.graph["AT"])
+        self.assertIn("GC", dbg.graph["TG"])
+        self.assertIn("CG", dbg.graph["GC"])
+
+    def test_debruijn_eulerian_path(self):
+        kmers = ["CTTA", "ACCA", "TACC", "GGCT", "GCTT", "TTAC"]
+        dbg = DeBruijnGraph(kmers)
+        path = dbg.eulerian_path()
+        self.assertIsNotNone(path)
+        seq = dbg.seq_from_path(path)
+        self.assertTrue(all(kmer in seq for kmer in kmers))
+
+    def test_overlap_graph_construction(self):
+        frags = ["ATT", "TTA", "TAC"]
+        og = OverlapGraph(frags)
+        nodes = list(og.graph.keys())
+        self.assertEqual(len(nodes), 3)
+        for node in nodes:
+            self.assertTrue(node.startswith("A") or node.startswith("T"))
+
+    def test_overlap_hamiltonian_path(self):
+        frags = ["ATT", "TTA", "TAC"]
+        og = OverlapGraph(frags)
+        path = og.search_hamiltonian_path()
+        self.assertIsNotNone(path)
+        seq = og.seq_from_path(path)
+        for frag in frags:
+            self.assertIn(frag, seq)
+
+    def test_debruijn_seq_from_path_none(self):
+        dbg = DeBruijnGraph([])
+        self.assertIsNone(dbg.seq_from_path(None))
+
+    def test_overlap_seq_from_path_none(self):
+        og = OverlapGraph([])
+        self.assertIsNone(og.seq_from_path(None))
 
 if __name__ == "__main__":
     unittest.main()

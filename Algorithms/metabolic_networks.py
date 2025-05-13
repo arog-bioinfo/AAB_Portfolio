@@ -7,12 +7,6 @@ import heapq
 #-----------------------Metabolic Network-------------------------
 #=================================================================
 
-def is_in_tuple_list(tl, val):
-    for (x, _) in tl:
-        if val == x:
-            return True
-    return False
-
 class MN_Graph(Graph):
 
     def all_degrees(self, deg_type="inout"):
@@ -46,18 +40,6 @@ class MN_Graph(Graph):
             res[degs[k]] = res.get(degs[k], 0) + 1
         for k in res:
             res[k] /= float(len(degs))
-        return res
-    
-    def reachable_with_dist(self, s):
-        res = []
-        l = [(s, 0)]
-        while l:
-            node, dist = l.pop(0)
-            if node != s:
-                res.append((node, dist))
-            for elem in self.get_successors(node):
-                if not is_in_tuple_list(l, elem) and not is_in_tuple_list(res, elem):
-                    l.append((elem, dist + 1))
         return res
 
     def mean_distances(self):
@@ -139,23 +121,29 @@ class CentralityAnalyzer:
     def closeness_centrality(self):
         centrality = {}
         for node in self.graph.get_nodes():
-            total_dist = self._bfs_total_distance(node)
-            centrality[node] = (len(self.graph.get_nodes()) - 1) / total_dist if total_dist > 0 else 0
+            total_dist, reachable_count = self._bfs_total_distance_and_reach_count(node)
+            centrality[node] = (reachable_count / total_dist) if total_dist > 0 else 0.0
         return centrality
 
-    def _bfs_total_distance(self, start):
+    def _bfs_total_distance_and_reach_count(self, start):
         visited = set()
         queue = deque([(start, 0)])
         total = 0
+        reachable_count = 0
+
         while queue:
             node, dist = queue.popleft()
             if node not in visited:
                 visited.add(node)
-                total += dist
+                if node != start:
+                    total += dist
+                    reachable_count += 1
                 for neighbor in self.graph.get_successors(node):
                     if neighbor not in visited:
                         queue.append((neighbor, dist + 1))
-        return total
+
+        return total, reachable_count
+
 
     def betweenness_centrality(self):
         centrality = dict.fromkeys(self.graph.get_nodes(), 0.0)

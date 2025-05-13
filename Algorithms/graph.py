@@ -6,6 +6,12 @@ import graphviz
 #---------------Oriented Graph and Weightned Graph----------------
 #=================================================================
 
+def is_in_tuple_list(tl, val):
+    for (x, _) in tl:
+        if val == x:
+            return True
+    return False
+
 class Graph:
     def __init__(self, g=None):
         self.graph = {}
@@ -112,6 +118,18 @@ class Graph:
                     queue.append((neighbor, path + [node]))
         return None
 
+    def reachable_with_dist(self, s):
+        res = []
+        l = [(s, 0)]
+        while l:
+            node, dist = l.pop(0)
+            if node != s:
+                res.append((node, dist))
+            for elem in self.get_successors(node):
+                if not is_in_tuple_list(l, elem) and not is_in_tuple_list(res, elem):
+                    l.append((elem, dist + 1))
+        return res
+    
     def node_has_cycle(self, v):
         queue = [v]
         visited = set([v])
