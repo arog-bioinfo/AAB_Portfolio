@@ -101,6 +101,9 @@ class Graph:
         :param v: Vertex label.
         :return: List of successors.
         """
+        if v not in self.graph:
+            raise KeyError(f"Node {v} not found.")
+        
         return self.graph.get(v, [])
 
     def get_predecessors(self, v):
@@ -110,6 +113,9 @@ class Graph:
         :param v: Vertex label.
         :return: List of predecessors.
         """
+        if v not in self.graph:
+            raise KeyError(f"Node {v} not found.")
+        
         return [u for u in self.graph if v in self.graph[u]]
 
     def get_adjacents(self, v):
@@ -128,6 +134,9 @@ class Graph:
         :param v: Vertex label.
         :return: In-degree.
         """
+        if v not in self.graph:
+            raise KeyError(f"Node {v} not found.")
+        
         return len(self.get_predecessors(v))
 
     def out_degree(self, v):
@@ -137,6 +146,9 @@ class Graph:
         :param v: Vertex label.
         :return: Out-degree.
         """
+        if v not in self.graph:
+            raise KeyError(f"Node {v} not found.")
+        
         return len(self.get_successors(v))
 
     def degree(self, v):
@@ -146,6 +158,7 @@ class Graph:
         :param v: Vertex label.
         :return: Total degree.
         """
+        
         return self.in_degree(v) + self.out_degree(v)
 
     def reachable_bfs(self, v):
@@ -306,14 +319,23 @@ class WeightedGraph(Graph):
 
     def add_edge(self, o, d, w):
         """
-        Adds a weighted edge from vertex `o` to vertex `d`.
+        Adds a weighted edge from vertex `o` to vertex `d`.If there is already one, updates with new weight.
 
         :param o: Origin vertex.
         :param d: Destination vertex.
         :param w: Edge weight (numeric).
         """
+        if not isinstance(w,int) :
+            raise TypeError(f"Weight {w} not valid.")
+        
         self.add_vertex(o)
         self.add_vertex(d)
+
+        for i, (dest, weight) in enumerate(self.graph[o]):
+            if dest == d:
+                self.graph[o][i] = (d, w)
+                return
+            
         self.graph[o].append((d, w))
 
     def get_edges(self):
@@ -335,6 +357,9 @@ class WeightedGraph(Graph):
         :param v: Vertex label.
         :return: List of successor vertices.
         """
+        if v not in self.graph:
+            raise KeyError(f"Node {v} not found.")
+        
         return [d for d, _ in self.graph.get(v, [])]
 
     def dijkstra(self, start):

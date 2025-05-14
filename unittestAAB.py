@@ -218,175 +218,307 @@ class TestGraph(unittest.TestCase):
     def setUp(self):
         self.Graph = Graph
 
-    def test_add_vertex_and_edge(self):
+    def test_add_vertex_and_edge_complex(self):
         g = self.Graph()
         g.add_vertex("A")
         g.add_edge("A", "B")
+        g.add_edge("B", "A")  # making it bidirectional
+        g.add_edge("C", "C")  # self-loop
+        g.add_edge("A", "C")
         self.assertIn("A", g.graph)
         self.assertIn("B", g.graph)
+        self.assertIn("C", g.graph)
         self.assertIn("B", g.graph["A"])
-        self.assertNotIn("A", g.graph["B"])
+        self.assertIn("A", g.graph["B"])
+        self.assertIn("C", g.graph["C"])  # self-loop
+        self.assertNotIn("D", g.graph)
 
-    def test_get_nodes_and_edges(self):
-        g = self.Graph({"A": ["B", "C"], "B": ["C"]})
+    def test_get_nodes_and_edges_with_self_loop(self):
+        g = self.Graph({"A": ["B", "A"], "B": ["C"], "C": []})
         self.assertCountEqual(g.get_nodes(), ["A", "B", "C"])
-        self.assertCountEqual(g.get_edges(), [("A", "B"), ("A", "C"), ("B", "C")])
+        self.assertCountEqual(g.get_edges(), [("A", "B"), ("A", "A"), ("B", "C")])
 
-    def test_degrees(self):
-        g = self.Graph({"A": ["B", "C"], "C": ["A"]})
-        self.assertEqual(g.in_degree("A"), 1)
-        self.assertEqual(g.out_degree("A"), 2)
-        self.assertEqual(g.degree("A"), 3)  # in + out without double-count
+    def test_degrees_with_self_and_multiple_edges(self):
+        g = self.Graph({"A": ["B", "C", "A"], "C": ["A"], "B": []})
+        self.assertEqual(g.in_degree("A"), 2)
+        self.assertEqual(g.out_degree("A"), 3)
+        self.assertEqual(g.degree("A"), 5)
 
-    def test_successors_and_predecessors(self):
-        g = self.Graph({"A": ["B"], "B": ["C"], "C": []})
-        self.assertEqual(g.get_successors("A"), ["B"])
+    def test_successors_and_predecessors_with_disconnected_node(self):
+        g = self.Graph({"A": ["B"], "B": ["C"], "C": [], "D": []})
+        self.assertEqual(g.get_successors("D"), [])
         self.assertEqual(g.get_predecessors("C"), ["B"])
 
-    def test_bfs_reachability(self):
-        g = self.Graph({"A": ["B"], "B": ["C"], "C": []})
+    def test_bfs_and_dfs_on_disconnected_graph(self):
+        g = self.Graph({"A": ["B"], "B": ["C"], "C": [], "X": ["Y"], "Y": []})
         self.assertCountEqual(g.reachable_bfs("A"), ["B", "C"])
-        self.assertCountEqual(g.reachable_bfs("B"), ["C"])
-
-    def test_dfs_reachability(self):
-        g = self.Graph({"A": ["B"], "B": ["C"], "C": []})
+        self.assertCountEqual(g.reachable_bfs("X"), ["Y"])
         self.assertCountEqual(g.reachable_dfs("A"), ["B", "C"])
 
-    def test_distance_and_shortest_path(self):
-        g = self.Graph({"A": ["B"], "B": ["C"], "C": []})
-        self.assertEqual(g.distance("A", "C"), 2)
-        self.assertEqual(g.shortest_path("A", "C"), ["A", "B", "C"])
-        self.assertIsNone(g.distance("C", "A"))
-    
-    def test_reachable_with_dist(self):
+    def test_distance_and_shortest_path_extended(self):
+        g = self.Graph({
+            "A": ["B", "C"],
+            "B": ["D"],
+            "C": ["D"],
+            "D": [],
+            "E": []
+        })
+        self.assertEqual(g.distance("A", "D"), 2)
+        self.assertIn(g.shortest_path("A", "D"), [["A", "B", "D"], ["A", "C", "D"]])
+        self.assertIsNone(g.shortest_path("D", "A"))
+        self.assertIsNone(g.distance("E", "A"))
+
+    def test_reachable_with_dist_and_isolated(self):
         g = self.Graph({
             "A": ["B", "C"],
             "B": ["C"],
             "C": ["D"],
             "D": [],
-            "E": []  # unreachable node
+            "E": [],
+            "F": ["F"]  # self-loop node
         })
         reachable = g.reachable_with_dist("A")
-        self.assertIn(('B', 1), reachable)
-        self.assertIn(('C', 1), reachable)
-        self.assertIn(('D', 2), reachable)
-        self.assertNotIn(('E', 3), reachable)
+        expected = [('B', 1), ('C', 1), ('D', 2)]
+        for node in expected:
+            self.assertIn(node, reachable)
+        self.assertNotIn(('E', 1), reachable)
+        self.assertNotIn(('F', 1), reachable)
 
-    def test_cycle_detection(self):
-        g1 = self.Graph({"A": ["B"], "B": ["C"], "C": ["A"]})  # cycle
-        g2 = self.Graph({"A": ["B"], "B": ["C"], "C": []})     # no cycle
+    def test_cycle_detection_extended(self):
+        g1 = self.Graph({"A": ["B"], "B": ["C"], "C": ["A"], "D": []})  # cycle + isolated
+        g2 = self.Graph({"A": ["B"], "B": ["C"], "C": [], "D": []})    # no cycle
+        g3 = self.Graph({"X": ["X"]})  # self-loop = cycle
         self.assertTrue(g1.has_cycle())
         self.assertFalse(g2.has_cycle())
+        self.assertTrue(g3.has_cycle())
 
-    def test_size(self):
-        g = self.Graph({"A": ["B"], "B": ["C"]})
+    def test_size_with_disconnected_and_self_loops(self):
+        g = self.Graph({
+            "A": ["B", "A"],
+            "B": ["C"],
+            "C": [],
+            "D": ["D"],
+            "E": []
+        })
         nodes, edges = g.size()
-        self.assertEqual(nodes, 3)
-        self.assertEqual(edges, 2)
+        self.assertEqual(nodes, 5)
+        self.assertEqual(edges, 4)  # A→B, A→A, B→C, D→D
+
+    def test_random_large_graph_consistency(self):
+        g = self.Graph()
+        nodes = [chr(i) for i in range(65, 75)]  # A-J
+        for node in nodes:
+            g.add_vertex(node)
+        for _ in range(20):
+            u, v = random.sample(nodes, 2)
+            g.add_edge(u, v)
+
+        all_nodes = g.get_nodes()
+        self.assertCountEqual(all_nodes, nodes)
+        size_nodes, size_edges = g.size()
+        self.assertEqual(size_nodes, len(nodes))
+        self.assertTrue(size_edges <= 20)
+
+    def test_invalid_node_operations(self):
+        g = self.Graph({"A": ["B"], "B": []})
+        with self.assertRaises(KeyError):
+            g.in_degree("Z")
+        with self.assertRaises(KeyError):
+            g.out_degree("Z")
+        with self.assertRaises(KeyError):
+            g.get_successors("Z")
+        with self.assertRaises(KeyError):
+            g.get_predecessors("Z")
 
 class TestWeightnedGraph(unittest.TestCase):
+
     def setUp(self):
         self.WeightedGraph = WeightedGraph
 
-    def test_add_edge_and_get_edges(self):
+    def test_add_edge_and_get_edges_complex(self):
         g = self.WeightedGraph()
         g.add_edge('A', 'B', 5)
         g.add_edge('A', 'C', 2)
-        self.assertIn(('A', 'B', 5), g.get_edges())
-        self.assertIn(('A', 'C', 2), g.get_edges())
+        g.add_edge('B', 'A', 1)  # reverse edge
+        g.add_edge('C', 'C', 7)  # self-loop
+        edges = g.get_edges()
+        self.assertIn(('A', 'B', 5), edges)
+        self.assertIn(('A', 'C', 2), edges)
+        self.assertIn(('B', 'A', 1), edges)
+        self.assertIn(('C', 'C', 7), edges)
 
-    def test_graph_construction_from_dict(self):
+    def test_graph_construction_from_dict_complex(self):
         g = self.WeightedGraph({
             'A': [('B', 3), ('C', 1)],
-            'B': [('C', 7)]
+            'B': [('C', 7)],
+            'D': []  # disconnected node
         })
         self.assertCountEqual(g.get_edges(), [
             ('A', 'B', 3),
             ('A', 'C', 1),
             ('B', 'C', 7)
         ])
+        self.assertIn('D', g.get_nodes())
+        self.assertEqual(g.get_successors('D'), [])
 
-    def test_get_successors(self):
+    def test_get_successors_with_weights(self):
         g = self.WeightedGraph({
             'X': [('Y', 2), ('Z', 4)],
-            'Y': [('Z', 1)]
+            'Y': [('Z', 1)],
+            'Z': []
         })
-        self.assertEqual(g.get_successors('X'), ['Y', 'Z'])
+        self.assertEqual(set(g.get_successors('X')), {'Y', 'Z'})
         self.assertEqual(g.get_successors('Y'), ['Z'])
         self.assertEqual(g.get_successors('Z'), [])
 
-    def test_dijkstra(self):
+    def test_dijkstra_with_cycle_and_self_loop(self):
         g = self.WeightedGraph({
-            'A': [('B', 1), ('C', 4)],
-            'B': [('C', 2), ('D', 5)],
-            'C': [('D', 1)],
-            'D': []
+            'A': [('B', 1)],
+            'B': [('C', 2)],
+            'C': [('A', 3), ('C', 0)],  # cycle and self-loop
+            'D': []  # disconnected
         })
         distances = g.dijkstra('A')
-        expected = {'A': 0, 'B': 1, 'C': 3, 'D': 4}
-        self.assertEqual(distances, expected)
+        self.assertEqual(distances['A'], 0)
+        self.assertEqual(distances['B'], 1)
+        self.assertEqual(distances['C'], 3)
+        self.assertEqual(distances['D'], float('inf'))
 
-    def test_dijkstra_disconnected(self):
+    def test_dijkstra_disconnected_extended(self):
         g = self.WeightedGraph({
             'A': [('B', 2)],
             'B': [],
-            'C': []  # disconnected node
+            'C': [],
+            'D': [('E', 1)],
+            'E': []
         })
         distances = g.dijkstra('A')
         self.assertEqual(distances['A'], 0)
         self.assertEqual(distances['B'], 2)
         self.assertEqual(distances['C'], float('inf'))
+        self.assertEqual(distances['D'], float('inf'))
+        self.assertEqual(distances['E'], float('inf'))
+
+    def test_update_existing_edge(self):
+        g = self.WeightedGraph()
+        g.add_edge('X', 'Y', 10)
+        g.add_edge('X', 'Y', 5)  # update
+        self.assertIn(('X', 'Y', 5), g.get_edges())
+        self.assertNotIn(('X', 'Y', 10), g.get_edges())
+
+    def test_add_edge_invalid_weight(self):
+        g = self.WeightedGraph()
+        with self.assertRaises(TypeError):
+            g.add_edge('A', 'B', 'high')  # invalid weight
+
+    def test_nonexistent_node_handling(self):
+        g = self.WeightedGraph({'A': [('B', 1)], 'B': []})
+        with self.assertRaises(KeyError):
+            g.get_successors('Z')
+
+        with self.assertRaises(KeyError):
+            g.dijkstra('Z')
+
+    def test_nodes_and_edges_consistency(self):
+        g = self.WeightedGraph({
+            'M': [('N', 2), ('O', 4)],
+            'N': [('P', 1)],
+            'O': [],
+            'P': []
+        })
+        self.assertCountEqual(g.get_nodes(), ['M', 'N', 'O', 'P'])
+        edges = g.get_edges()
+        self.assertIn(('M', 'N', 2), edges)
+        self.assertIn(('M', 'O', 4), edges)
+        self.assertIn(('N', 'P', 1), edges)
+        self.assertEqual(len(edges), 3)
 
 #=================================================================
 #-----------------------Metabolic Network-------------------------
 #=================================================================
 
-class TestBiologicalNetwork(unittest.TestCase):
+class TestMNGraph(unittest.TestCase):
+
     def setUp(self):
+        # Simulate a directed metabolic network with cycles, hubs, and isolates
         self.graph = MN_Graph({
-            'A': ['B', 'C'],
-            'B': ['C', 'D'],
-            'C': ['D'],
-            'D': ['E'],
-            'E': []
+            'A': ['B', 'C', 'D'],
+            'B': ['C'],
+            'C': ['D', 'E'],
+            'D': ['A', 'F'],
+            'E': ['F'],
+            'F': [],
+            'G': [],         # isolated node
+            'H': ['I', 'J'],
+            'I': ['J'],
+            'J': []
         })
 
-    def test_mean_distances(self):
-        mean_dist, density = self.graph.mean_distances()
-        self.assertGreater(mean_dist, 0)
-        self.assertGreaterEqual(density, 0)
-        self.assertLessEqual(density, 1)
+    def test_mean_distances_debug(self):
+        g = MN_Graph({
+            'A': ['B'],
+            'B': ['C'],
+            'C': ['D'],
+            'D': []
+        })
+        
+        mean_dist, density = g.mean_distances()
+        self.assertAlmostEqual(mean_dist, 1.6667, delta=0.0001)
+        self.assertAlmostEqual(density, 0.5, delta=0.0001) #Manually calculated
 
-    def test_closeness_centrality(self):
-        cc = self.graph.closeness_centrality('A')
-        self.assertGreater(cc, 0)
-        self.assertLessEqual(cc, 1)
+    def test_closeness_centrality_values(self):
+        cc_A = self.graph.closeness_centrality('A')
+        cc_G = self.graph.closeness_centrality('G')  # isolated node
+        cc_D = self.graph.closeness_centrality('D')
 
-    def test_highest_closeness(self):
-        top = self.graph.highest_closeness(top=3)
-        self.assertTrue(all(n in self.graph.get_nodes() for n in top))
-        self.assertEqual(len(top), 3)
+        self.assertGreater(cc_A, 0)
+        self.assertEqual(cc_G, 0)  # no reachable nodes
+        self.assertGreater(cc_D, cc_G)
 
-    def test_betweenness_centrality(self):
-        bc = self.graph.betweenness_centrality('C')
-        self.assertGreaterEqual(bc, 0)
-        self.assertLessEqual(bc, 1)
+    def test_highest_closeness_top3(self):
+        top_nodes = self.graph.highest_closeness(top=3)
+        self.assertEqual(len(top_nodes), 3)
+        scores = [self.graph.closeness_centrality(n) for n in top_nodes]
+        self.assertTrue(all(x >= y for x, y in zip(scores, scores[1:])))
 
-    def test_clustering_coef(self):
-        coef = self.graph.clustering_coef('B')
-        self.assertGreaterEqual(coef, 0)
-        self.assertLessEqual(coef, 1)
+    def test_betweenness_centrality_distribution(self):
+        bc_C = self.graph.betweenness_centrality('C')
+        bc_G = self.graph.betweenness_centrality('G')
+        bc_D = self.graph.betweenness_centrality('D')
 
-    def test_mean_clustering_coef(self):
+        self.assertGreaterEqual(bc_C, 0)
+        self.assertLessEqual(bc_C, 1)
+        self.assertEqual(bc_G, 0)
+        self.assertGreater(bc_C, bc_G)
+        self.assertNotEqual(bc_D, 0)  # D is in multiple paths
+
+    def test_clustering_coef_boundaries(self):
+        coef_B = self.graph.clustering_coef('B')
+        coef_A = self.graph.clustering_coef('A')
+        coef_G = self.graph.clustering_coef('G')  # isolated node
+
+        self.assertGreaterEqual(coef_B, 0)
+        self.assertLessEqual(coef_B, 1)
+        self.assertGreaterEqual(coef_A, 0)
+        self.assertLessEqual(coef_A, 1)
+        self.assertEqual(coef_G, 0)
+
+    def test_mean_clustering_coef_accuracy(self):
         mean_cc = self.graph.mean_clustering_coef()
         self.assertGreaterEqual(mean_cc, 0)
         self.assertLessEqual(mean_cc, 1)
+        # Optional: check against manual average if expected
 
-    def test_mean_clustering_perdegree(self):
+    def test_mean_clustering_perdegree_structure(self):
         ck = self.graph.mean_clustering_perdegree()
-        for k, v in ck.items():
-            self.assertGreaterEqual(v, 0)
-            self.assertLessEqual(v, 1)
+        for degree, coef in ck.items():
+            self.assertIsInstance(degree, int)
+            self.assertGreaterEqual(coef, 0)
+            self.assertLessEqual(coef, 1)
+
+        unique_degrees = set(self.graph.all_degrees().values())
+        self.assertEqual(set(ck.keys()), unique_degrees)
+
 
 class TestCentralityAnalyzer(unittest.TestCase):
     def setUp(self):
@@ -439,41 +571,66 @@ class TestCentralityAnalyzer(unittest.TestCase):
 #-----------------------Assembly Algorythm------------------------
 #=================================================================
 
-class TestAssembly(unittest.TestCase):
-    def test_composition(self):
-        self.assertEqual(
+class TestDeBruijnAssembly(unittest.TestCase):
+    def test_composition_basic(self):
+        self.assertCountEqual(
             composition(3, "ATGCG"),
-            ["ATG", "GCG", "TGC"]
+            ["ATG", "TGC", "GCG"]
         )
 
-    def test_debruijn_graph_construction(self):
-        kmers = ["ATG", "TGC", "GCG"]
-        dbg = DeBruijnGraph(kmers)
-        self.assertIn("AT", dbg.graph)
-        self.assertIn("TG", dbg.graph)
-        self.assertIn("GC", dbg.graph)
-        self.assertIn("TG", dbg.graph["AT"])
-        self.assertIn("GC", dbg.graph["TG"])
-        self.assertIn("CG", dbg.graph["GC"])
+    def test_composition_with_duplicates(self):
+        self.assertCountEqual(
+            composition(3, "ATGCGATG"),
+            ["ATG", "TGC", "GCG", "CGA", "GAT", "ATG"]
+        )
 
-    def test_debruijn_eulerian_path(self):
+    def test_debruijn_graph_construction_complex(self):
+        kmers = ["ATG", "TGC", "GCG", "CGA", "GAT"]
+        dbg = DeBruijnGraph(kmers)
+        expected_nodes = {"AT", "TG", "GC", "CG", "GA"}
+        self.assertTrue(expected_nodes.issubset(set(dbg.graph.keys())))
+        self.assertIn("GC", dbg.graph["TG"])
+        self.assertIn("GA", dbg.graph["CG"])
+
+    def test_debruijn_eulerian_path_validity(self):
         kmers = ["CTTA", "ACCA", "TACC", "GGCT", "GCTT", "TTAC"]
         dbg = DeBruijnGraph(kmers)
         path = dbg.eulerian_path()
         self.assertIsNotNone(path)
         seq = dbg.seq_from_path(path)
-        self.assertTrue(all(kmer in seq for kmer in kmers))
+        for kmer in kmers:
+            self.assertIn(kmer, seq)
 
-    def test_overlap_graph_construction(self):
+    def test_debruijn_no_path_for_disconnected_graph(self):
+        kmers = ["AAA", "TTT", "GGG"]
+        dbg = DeBruijnGraph(kmers)
+        path = dbg.eulerian_path()
+        self.assertIsNone(path)
+
+    def test_debruijn_seq_from_path_none(self):
+        dbg = DeBruijnGraph([])
+        self.assertIsNone(dbg.seq_from_path(None))
+
+class TestOverlapAssembly(unittest.TestCase):
+
+    def test_overlap_graph_construction_simple(self):
         frags = ["ATT", "TTA", "TAC"]
         og = OverlapGraph(frags)
-        nodes = list(og.graph.keys())
-        self.assertEqual(len(nodes), 3)
-        for node in nodes:
-            self.assertTrue(node.startswith("A") or node.startswith("T"))
 
-    def test_overlap_hamiltonian_path(self):
-        frags = ["ATT", "TTA", "TAC"]
+        def clean(fragment_id):
+            return fragment_id.split('-')[0]
+
+        for src in og.graph:
+            for dst in og.graph[src]:
+                src_clean = clean(src)
+                dst_clean = clean(dst)
+                self.assertTrue(
+                    src_clean[-2:] == dst_clean[:2],
+                    msg=f"Failed overlap: {src_clean} → {dst_clean}"
+                )
+
+    def test_overlap_graph_with_multiple_overlaps(self):
+        frags = ["ATTA", "TTAC", "TACC", "ACCG"]
         og = OverlapGraph(frags)
         path = og.search_hamiltonian_path()
         self.assertIsNotNone(path)
@@ -481,9 +638,10 @@ class TestAssembly(unittest.TestCase):
         for frag in frags:
             self.assertIn(frag, seq)
 
-    def test_debruijn_seq_from_path_none(self):
-        dbg = DeBruijnGraph([])
-        self.assertIsNone(dbg.seq_from_path(None))
+    def test_overlap_graph_hamiltonian_fails_for_disconnected(self):
+        frags = ["AAA", "CCC", "GGG"]
+        og = OverlapGraph(frags)
+        self.assertIsNone(og.search_hamiltonian_path())
 
     def test_overlap_seq_from_path_none(self):
         og = OverlapGraph([])
