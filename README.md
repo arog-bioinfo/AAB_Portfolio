@@ -3,26 +3,33 @@
 
 📁 Structure
 
-    Algorithms/ – Core algorithm implementations:
+Algorithms/ – Core algorithm implementations:
 
-        BB.py – Branch and Bound algorithm.
+    BB.py – Branch and Bound Algorithm.
+    BWT.py – Burrows-Wheeler Transform.
+    assembly.py – Sequence assembly.
+    auto_finito.py – Finite Automaton implementation.
+    exaustivo.py – Exhaustive Motif Search.
+    gibbs.py – Gibbs Sampling algorithm (Motifs).
+    graph.py – Graph Algorithm.
+    metabolic_networks.py – Graph for Metabolic Networks.
+    tries.py – Tries Algorithm.
 
-        BWT.py – Burrows-Wheeler Transform.
+handwritten_tests/ – Manually written examples:
 
-        auto_finito.py – Finite Automaton implementation.
+    Assembly/ 
+    BN_Graph/ 
+    Graph/ 
 
-        exaustivo.py – Exhaustive search strategy.
+Notebooks:
 
-        gibbs.py – Gibbs Sampling algorithm.
+    Part_1.ipynb – Checkpoint 1 
+    Part_2.ipynb – Checkpoint 2
+    Part_3.ipynb – Checkpoint 3 or final integration
+    radon_analysis.ipynb – Radon statistics (Implementation complexity)
 
-        tries.py – Trie data structure for string pattern matching.
+Other files:
 
-    Notebooks:
-
-        Part_1.ipynb – Checkpoint 1 
-
-        Part_2.ipynb – Checkpoint 2
-
-        radon_analysis.ipynb – Additional case study or project (e.g., radon data).
-
+    ecoli.txt – Example dataset (e.g., genome or metabolic input).
     unittestAAB.py – Unit tests for validating algorithm correctness.
+    README.md – Project description and file guide.
